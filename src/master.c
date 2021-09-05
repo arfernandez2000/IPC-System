@@ -10,7 +10,7 @@ int main(int argc, char const *argv[]){
         fprintf(stderr, "Incorrect number of arguments: %s/n", argv[0]);
         exit(ERROR);
     }
-    
+    printf("algo");
     setvbuf(stdout,NULL,_IONBF,0); 
    
 }
