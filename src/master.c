@@ -8,18 +8,22 @@
 #include <stddef.h>
 #include "shm.h"
 #include <string.h>
+#include <errors.h>
 
-#define ERROR 1
+#define SLAVES 7
+#define DIRECTION_SENSE 2
+#define RW_END 2
+
 
 int createSlaves();
 void createShm();
 void writeShm();
 
 int main(int argc, char const *argv[]){
-    // if(argc < 2) {
-    //     fprintf(stderr, "Incorrect number of arguments: %s/n", argv[0]);
-    //     exit(ERROR);
-    // }
+    sleep(2);
+    // int pipes[SLAVES][DIRECTION_SENSE][RW_END] = createPipes(argc-1);
+
+    // write(pipes[6][0][1], "hola mundo", 10);
 
     createShm();
 
@@ -30,6 +34,30 @@ int main(int argc, char const *argv[]){
     setvbuf(stdout,NULL,_IONBF,0); 
    
 }
+// int *** createPipes(int fileCount){
+//     int pipes[SLAVES][DIRECTION_SENSE][RW_END];
+
+//     int slavesToUse = fileCount>SLAVES ? SLAVES: fileCount;
+
+//     for(int i=0; i< slavesToUse; i++){
+//             for(int j=0; j<DIRECTION_SENSE; j++){
+//                 if(pipe(pipes[i][j]) < 0){
+//                     error("Pipe Creation Error");
+//                 }
+//             }
+//     }
+//     return pipes;
+// }
+// void closePipes(int fileCount, int *** pipes){
+//     for(int i=0 ; i< fileCount; i++){
+//         for(int j=0; j<DIRECTION_SENSE; j++){
+//             close(pipes[i][j][0]);
+//             close(pipes[i][j][1]);
+//         }
+       
+//     }
+
+// }
 
 void createShm(){
 

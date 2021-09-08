@@ -10,7 +10,6 @@
 #include "shm.h"
 
 int main(int argc, char const *argv[]) {
-    sleep(10);
     int fd;
     char *ptr;
     struct stat shm_st;
