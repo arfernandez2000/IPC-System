@@ -1,6 +1,12 @@
 # TP1-SO
 Primer Trabajo Práctico Obligatorio para la materia Sistemas Operativos
 
+# Requerimentos
+
+Minisat library installed
+
+sudo apt-get install minisat
+
 # Compile and run unit tests
 
 To compile MemoryManagerTest run:

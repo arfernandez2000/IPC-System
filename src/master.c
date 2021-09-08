@@ -45,11 +45,11 @@ void createShm(){
 
     fd  = shm_open(SHM_NAME, O_CREAT | O_RDWR, 00700);
     if (-1 == fd)
-        perror("shm_open failed");
+        error("shm_open failed");
     
 
     if(-1 == ftruncate(fd, SHM_SIZE)){
-        perror("ftruncate failed");
+        error("ftruncate failed");
     };
         
 }
@@ -64,12 +64,12 @@ void writeShm(){
 
     fd = shm_open(SHM_NAME, O_RDWR, 0);
     if (-1 == fd)
-       perror("shm_open failed");
+       error("shm_open failed");
     
     ptr = mmap(NULL, 50, PROT_WRITE, MAP_SHARED, fd, 0);
 
     if(ptr == MAP_FAILED){
-        perror("Map failed");
+        error("Map failed");
     }
 
     fgets(buff, sizeof(buff), stdin);
