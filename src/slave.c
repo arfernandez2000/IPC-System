@@ -9,15 +9,15 @@
 #include "errors.h"
 
 #define BUFFER_SIZE 4096
-// ./slave filepath pipename
+// ./slave pipename filepath
 int main(int argc, char * argv[]){
 
-    char filePath[BUFFER_SIZE] = argv[1];
+    char *filePath = argv[2];
     
     char * parser = "grep -o -e \"Number of.*[0-9]\\+\" -e \"CPU time.*\" -e \".*SATISFIABLE\"";
     char command[BUFFER_SIZE];
     char resultSolver[BUFFER_SIZE];
-    char masterResult[BUFFER_SIZE];
+    char masterResult[BUFFER_SIZE*2];
     
     if(sprintf(command,"minisat %s | %s",filePath,parser) < 0){
         error("Command build failed : sprintf error");
@@ -36,11 +36,10 @@ int main(int argc, char * argv[]){
     if(sprintf(masterResult,"PID: %d \nFilename: %s\n%s\n",getpid(),filePath,resultSolver) < 0){
         error("Master response build failed");
     }
-    printf("\n%s", masterResult);
+    
     
     int fdOUT;
-    mkfifo(argv[2],0666);
-    fdOUT = open(argv[2], O_WRONLY);
+    fdOUT = open(argv[1], O_WRONLY);
     write(fdOUT,masterResult,BUFFER_SIZE);
     close(fdOUT);
 

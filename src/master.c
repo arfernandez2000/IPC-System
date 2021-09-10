@@ -8,11 +8,14 @@
 #include <stddef.h>
 #include "shm.h"
 #include <string.h>
-#include <errors.h>
+#include "errors.h"
 
 #define SLAVES 7
 #define DIRECTION_SENSE 2
 #define RW_END 2
+
+#define SLAVE_PATH "./slave"
+#define P_NAME "/tmp/PRUEBITA"
 
 
 int createSlaves();
@@ -20,18 +23,57 @@ void createShm();
 void writeShm();
 
 int main(int argc, char const *argv[]){
+    
     sleep(2);
+    
     // int pipes[SLAVES][DIRECTION_SENSE][RW_END] = createPipes(argc-1);
 
     // write(pipes[6][0][1], "hola mundo", 10);
 
-    createShm();
+    if(argc < 2){
+        error("Cantidad incorrecta de argumentos");
+    }
 
-    //cuando reciva la info del slave
-    for(int i = 0; i < 10; i++)
-        writeShm();
+    if(mkfifo(P_NAME,0666) < 0){
+        error("Error al crear pipe");
+    }
 
-    setvbuf(stdout,NULL,_IONBF,0); 
+    
+
+    char * argSlave[] = {P_NAME, argv[1]};
+
+    execv(SLAVE_PATH, argSlave);
+
+    char buff[4096];
+    int fdPipe = open(P_NAME, O_RDONLY);
+
+    fd_set fds;
+    
+    FD_ZERO(&fds);
+    FD_SET(fdPipe, &fds);
+
+    select(fdPipe, &fds, NULL, NULL, NULL);
+
+    int res;
+    if(FD_ISSET(fdPipe, &fds)){
+        res = read(fdPipe, buff, sizeof(buff));  
+        if (res > 0) {
+            error("Error al leer pipe");
+        }
+        
+    } 
+
+    close(fdPipe);
+
+    printf("%s", buff);
+
+    // createShm();
+
+    // //cuando reciva la info del slave
+    // for(int i = 0; i < 10; i++)
+    //     writeShm();
+
+    // setvbuf(stdout,NULL,_IONBF,0); 
    
 }
 // int *** createPipes(int fileCount){
