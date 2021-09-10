@@ -15,7 +15,7 @@
 #define RW_END 2
 
 #define SLAVE_PATH "./slave"
-#define P_NAME "/tmp/PRUEBITA"
+#define P_NAME "/tmp/mi_fifo"
 
 
 int createSlaves();
@@ -23,22 +23,13 @@ void createShm();
 void writeShm();
 
 int main(int argc, char const *argv[]){
-    
     sleep(2);
-    
-    // int pipes[SLAVES][DIRECTION_SENSE][RW_END] = createPipes(argc-1);
-
-    // write(pipes[6][0][1], "hola mundo", 10);
 
     if(argc < 2){
         error("Cantidad incorrecta de argumentos");
     }
 
-    if(mkfifo(P_NAME,0666) < 0){
-        error("Error al crear pipe");
-    }
-
-    
+    mkfifo(P_NAME,0666);
 
     char * argSlave[] = {P_NAME, argv[1]};
 
@@ -74,32 +65,8 @@ int main(int argc, char const *argv[]){
     //     writeShm();
 
     // setvbuf(stdout,NULL,_IONBF,0); 
-   
+    return 0;
 }
-// int *** createPipes(int fileCount){
-//     int pipes[SLAVES][DIRECTION_SENSE][RW_END];
-
-//     int slavesToUse = fileCount>SLAVES ? SLAVES: fileCount;
-
-//     for(int i=0; i< slavesToUse; i++){
-//             for(int j=0; j<DIRECTION_SENSE; j++){
-//                 if(pipe(pipes[i][j]) < 0){
-//                     error("Pipe Creation Error");
-//                 }
-//             }
-//     }
-//     return pipes;
-// }
-// void closePipes(int fileCount, int *** pipes){
-//     for(int i=0 ; i< fileCount; i++){
-//         for(int j=0; j<DIRECTION_SENSE; j++){
-//             close(pipes[i][j][0]);
-//             close(pipes[i][j][1]);
-//         }
-       
-//     }
-
-// }
 
 void createShm(){
 
@@ -121,6 +88,7 @@ void createShm(){
     if(-1 == ftruncate(fd, SHM_SIZE)){
         error("ftruncate failed");
     };
+
         
 }
 
