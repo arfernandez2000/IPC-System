@@ -7,13 +7,27 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <string.h>
+#include "errors.h"
 #include "shm.h"
 
 int main(int argc, char const *argv[]) {
     int fd;
     char *ptr;
     struct stat shm_st;
+    int fileCount;
     
+    if(argc ==2){
+        fileCount = atoi(argv[1]);
+    }
+    else if( argc == 1){
+        char buffer[BUF_SIZE];
+        read(STDIN_FILENO, buffer, BUF_SIZE);
+        fileCount = atoi(buffer); 
+    }
+    else{
+        error("Wrong number  of arguments");
+    }
+
     fd = shm_open (SHM_NAME,  O_RDONLY  , 00400); /* open s.m object*/
     if(fd == -1)
     {
@@ -31,8 +45,15 @@ int main(int argc, char const *argv[]) {
     {
         perror("Map failed");
     }
-    
-    printf("%s \n", ptr);
+
+    int i=0;
+    while (i < fileCount){
+        //semaforo para ver que  no este escribiendo
+        int size = printf("%s \n", ptr);
+        ptr += size+1;
+        i++;
+        //habilita el semaforo para escribir
+    }
 
     close(fd);
     

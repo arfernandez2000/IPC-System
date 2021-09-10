@@ -17,10 +17,12 @@
 #define SLAVE_PATH "./slave"
 #define P_NAME "/tmp/mi_fifo"
 
+static int slaves[SLAVES]={0};
 
 int createSlaves();
 void createShm();
 void writeShm();
+void assignProcesses(int fileCount);
 
 int main(int argc, char const *argv[]){
     sleep(2);
@@ -29,34 +31,38 @@ int main(int argc, char const *argv[]){
         error("Cantidad incorrecta de argumentos");
     }
 
-    mkfifo(P_NAME,0666);
+    // Imprime la cantidad de archivos para que el view sepa cuando parar
+    printf("%d", argc - 1);
+    assignProcesses(argc);
+//------------------------------------------------------------
+    // mkfifo(P_NAME,0666);
 
-    char * argSlave[] = {P_NAME, argv[1]};
+    // char * argSlave[] = {P_NAME, argv[1]};
 
-    execv(SLAVE_PATH, argSlave);
+    // execv(SLAVE_PATH, argSlave);
 
-    char buff[4096];
-    int fdPipe = open(P_NAME, O_RDONLY);
+    // char buff[4096];
+    // int fdPipe = open(P_NAME, O_RDONLY);
 
-    fd_set fds;
+    // fd_set fds;
     
-    FD_ZERO(&fds);
-    FD_SET(fdPipe, &fds);
+    // FD_ZERO(&fds);
+    // FD_SET(fdPipe, &fds);
 
-    select(fdPipe, &fds, NULL, NULL, NULL);
+    // select(fdPipe, &fds, NULL, NULL, NULL);
 
-    int res;
-    if(FD_ISSET(fdPipe, &fds)){
-        res = read(fdPipe, buff, sizeof(buff));  
-        if (res > 0) {
-            error("Error al leer pipe");
-        }
+    // int res;
+    // if(FD_ISSET(fdPipe, &fds)){
+    //     res = read(fdPipe, buff, sizeof(buff));  
+    //     if (res > 0) {
+    //         error("Error al leer pipe");
+    //     }
         
-    } 
+    // } 
 
-    close(fdPipe);
+    // close(fdPipe);
 
-    printf("%s", buff);
+    // printf("%s", buff);
 
     // createShm();
 
@@ -66,6 +72,15 @@ int main(int argc, char const *argv[]){
 
     // setvbuf(stdout,NULL,_IONBF,0); 
     return 0;
+}
+
+void assignProcesses(int fileCount) {
+    if(SLAVES * 2 >= fileCount) {
+        //asignar uno a cada uno  
+    }
+    else {
+        //dos a cada uno
+    }    
 }
 
 void createShm(){
