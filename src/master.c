@@ -52,7 +52,7 @@ int main(int argc, char const *argv[]){
     //cuando reciva la info del slave
     // for(int i = 0; i < 10; i++)
          
-    writeShm(0);
+    ptr_write = writeShm(0);
    
     // setvbuf(stdout,NULL,_IONBF,0);
     fclose(results);
@@ -61,22 +61,6 @@ int main(int argc, char const *argv[]){
 
     return 0;
 }
-
-void createShm(){
-
-    int fd;
-
-    fd  = shm_open(SHM_NAME, O_CREAT | O_RDWR, 00700);
-    if (-1 == fd)
-        error("shm_open failed");
-    
-
-    if(-1 == ftruncate(fd, SHM_SIZE)){
-        error("ftruncate failed");
-    };
-
-        
-}   
 
 void createSlaves(int fileCount, int initialTasks, const char* files[]) {
 
@@ -160,7 +144,26 @@ void createSlaves(int fileCount, int initialTasks, const char* files[]) {
     
 // }
 
-/* Transfer blocks of data from stdin to shared memory */
+char *  createShm(){
+    int fd;
+    char * ptr;
+
+    fd  = shm_open(SHM_NAME, O_CREAT | O_RDWR, 00700);
+    if (-1 == fd)
+        error("shm_open failed");
+
+    if(-1 == ftruncate(fd, SHM_SIZE)){
+        error("ftruncate failed");
+    };
+
+    ptr = mmap(NULL, 50, PROT_WRITE, MAP_SHARED, fd, 0);
+
+    if(ptr == MAP_FAILED){
+        error("Map failed");
+    }
+
+    return ptr;   
+}   
 
 char* writeShm(int offset){
     
@@ -172,12 +175,7 @@ char* writeShm(int offset){
     if (-1 == fd)
        error("shm_open failed");
     
-    ptr = mmap(NULL, 50, PROT_WRITE, MAP_SHARED, fd, offset);
-
-    if(ptr == MAP_FAILED){
-        error("Map failed");
-    }
-
+   
     fgets(buff, sizeof(buff), stdin);
     size_t strLength = strlen(buff);
     memcpy(ptr,buff, strLength);
