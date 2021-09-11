@@ -19,16 +19,11 @@ void solver(char* pathName);
 // ./slave pipename filepath
 int main(int argc, char * argv[]) {
 
-    FILE* fdPruebaSlave;
-    fdPruebaSlave = fopen("logSlave.txt", "w+") ;
-    fputs(argv[0], fdPruebaSlave);
-
     for (int i = 0; i < argc; i++) {
-        fputs("alog", fdPruebaSlave);
         solver(argv[i]);
     }
 
-    fclose(fdPruebaSlave);
+    
 
     return 0;
 

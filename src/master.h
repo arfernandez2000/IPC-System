@@ -26,6 +26,7 @@ typedef struct slaveinfo {
 } slaveinfo;
 
 int createSlaves(int fileCount, int initTasks, char* files[], slaveinfo* slave);
+void closeSlaves(slaveinfo* slave, int slaveCount);
 void assignTasks(slaveinfo* slave, int slaveCount, int remainingTasks, FILE* results, char* tasks[]);
 void writeResult(FILE* results, slaveinfo slave);
 void newTask(slaveinfo slave, char* tasks[], int* remainingTasks);
