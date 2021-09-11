@@ -18,7 +18,7 @@
 #define USED 1
 #define UNUSED 0
 
-#define SLAVES 7
+#define SLAVES 2
 #define SLAVE_PATH "./slave"
 
 
@@ -48,12 +48,13 @@ int main(int argc, char const *argv[]){
         remainingTaks -= slaveCount*initialTasks;
     }
 
-    assignTasks(&slave, slaveCount, remainingTaks, results, (char**) argv + 1);
+    //assignTasks(&slave, slaveCount, remainingTaks, results, (char**) argv + 1);
    
     //cuando reciva la info del slave
     // for(int i = 0; i < 10; i++)
-    //     writeShm();
-
+         
+    // writeShm();
+    // sem_post(shm);
     // setvbuf(stdout,NULL,_IONBF,0);
     fclose(results);
     
@@ -74,25 +75,32 @@ void createShm(){
     };
 
         
-}
+}   
 
 int createSlaves(int slaveCount, int initialTasks, char* files[], slaveinfo* slave) {
+
+    FILE* fdPrueba;
+    fdPrueba = fopen("log.txt", "w+") ;
 
     int tasks[2];
     int answers[2];
 
-    int counter = 0;
     char* filesToSend[BUF_SIZE] = {0};
+    int counter = 1;
+    char readBuf[4900] = {0};    
+
+    printf("initial Tasks: %d\n", initialTasks);
+    printf("slaves count: %d\n", slaveCount);
 
     //for por cada slave -> cortarlo si me quedo sin archivos antes de llenar los 7 slaves
     
-    for (int i = 0; i < slaveCount; i++) {
-        
-        if(pipe(tasks) < 0){
+    for (int i = 0; i < slaveCount; i++) {  
+        printf("esclavo: %d\t", i + 1);      
+        if(pipe(tasks) < 0) {
             error("Error al crear pipe task");
         }
 
-        if(pipe(answers) < 0){
+        if(pipe(answers) < 0) {
             error("Error al crear pipe answer");
         }
 
@@ -121,11 +129,11 @@ int createSlaves(int slaveCount, int initialTasks, char* files[], slaveinfo* sla
                 error("Error al cerras el fd de answers, WRITE");
             }
         
-            
             for (int j = 0; j < initialTasks; j++) {
+                printf("file: %s\n", files[counter]);
                 filesToSend[j] = files[counter++];
             }
-        
+
             if (execv(SLAVE_PATH, filesToSend) < 0) {
                 error("Error no funciona execv");
             }
@@ -137,10 +145,21 @@ int createSlaves(int slaveCount, int initialTasks, char* files[], slaveinfo* sla
         slave[i].fdTasksWrite = tasks[READ];
         slave[i].status = USED; 
         slave[i].tasks = initialTasks;
+
+        printf("fdAnswersRead: %d, fdTasksWrite: %d, tasks: %d\n", slave[i].fdAnswersRead, slave[i].fdTasksWrite, slave[i].tasks);
         if(close(tasks[READ]) < 0 || close(answers[WRITE]) < 0){
             error("Error al cerrar pipes");
         }
     }
+    //TODO-funcion para el select
+    sleep(2);
+    if (read(answers[READ], readBuf, 4900) < -1) {
+        error("Error al leer el answers, READ");
+    }
+
+	fputs(readBuf,fdPrueba);
+    // fputs("buenas\n",fdPrueba);
+    fclose(fdPrueba);
     return 1;
 }
 
