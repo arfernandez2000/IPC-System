@@ -37,7 +37,6 @@ int main(int argc, char const *argv[]){
  
     // createShm();
 
-    printf("%d", argc - 1);
     
     int initialTasks =  SLAVES * 2 >= argc ? 1 : 2;
 
@@ -76,11 +75,9 @@ void createShm(){
     };
 
         
-}
+}   
 
 void createSlaves(int fileCount, int initialTasks, const char* files[]) {
-
-    printf("entre");
 
     FILE* fdPrueba;
     fdPrueba = fopen("log.txt", "w+") ;
@@ -88,25 +85,26 @@ void createSlaves(int fileCount, int initialTasks, const char* files[]) {
     int tasks[2];
     int answers[2];
 
-    int counter = 0;
+    int counter = 1;
     int slaves = (fileCount > SLAVES)? SLAVES : fileCount;
-    printf(slaves);
 
-    const char** filesToSend = {0};
+    const char* filesToSend[BUF_SIZE];
+    char readBuf[4900] = {0};
 
     //for por cada slave -> cortarlo si me quedo sin archivos antes de llenar los 7 slaves
     
     // for (int i = 0; i < slaves; i++) {
     //     printf("for num: %d", i);
         
-        if(pipe(tasks) < 0){
+        if(pipe(tasks) < 0) {
             error("Error al crear pipe task");
         }
 
-        if(pipe(answers) < 0){
+        if(pipe(answers) < 0) {
             error("Error al crear pipe answer");
         }
     
+            
         if (fork() == 0) {
 
             if ( dup2(answers[WRITE], STDOUT) < 0) {
@@ -130,24 +128,24 @@ void createSlaves(int fileCount, int initialTasks, const char* files[]) {
                 error("Error al cerras el fd de answers, WRITE");
             }
         
-            
-            for (int j = 0; j < initialTasks; j++) {
+            for (int j = 0; j <= initialTasks; j++) {
                 filesToSend[j] = files[counter++];
             }
-        
+
             if (execv(SLAVE_PATH, filesToSend) < 0) {
                 error("Error no funciona execv");
             }
-        // }
-    }
+        }
+    // }
     //TODO-funcion para el select
-    char readBuf[4900] = {0};
+    
     sleep(2);
     if (read(answers[READ], readBuf, 4096) < -1) {
         error("Error al leer el answers, READ");
     }
 
 	fputs(readBuf,fdPrueba);
+    // fputs("buenas\n",fdPrueba);
     fclose(fdPrueba);
 
 }
