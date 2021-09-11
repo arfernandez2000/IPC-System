@@ -83,3 +83,7 @@ src/hole6.cnf
 src/log.txt
 src/logSlave.txt
 scr/results.txt
+src/.config/
+
+#Bash_history 
+.bash_history
