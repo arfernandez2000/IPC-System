@@ -1,19 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/mman.h>
-#include <sys/stat.h>        /* For mode constants */
-#include <fcntl.h>           /* For O_* constants */
-#include <unistd.h>
-#include <sys/types.h>
-#include <stddef.h>
-#include <semaphore.h>
-#include <sys/time.h>
-#include <string.h>
-#include "shm.h"
-#include "errors.h"
+#define _XOPEN_SOURCE 500 //ftruncate warning
 #include "master.h"
-
-
 #define READ 0
 #define WRITE 1
 #define STDOUT 1
@@ -25,7 +11,6 @@
 #define SLAVE_PATH "./slave"
 
 sem_t* semaphore;
-
 int main(int argc, char const *argv[]){
     if(argc < 2){
         error("Cantidad incorrecta de argumentos");
@@ -34,8 +19,10 @@ int main(int argc, char const *argv[]){
     sleep(2);
     
     char * ptr_write;
-    createShm();
-    semaphore = sem_open("/semaphore",O_CREAT,(S_IWUSR | S_IRUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH));
+    ptr_write = createShm();
+
+    
+    semaphore = sem_open(SEM,O_CREAT,SEM_FLAGS);
 
     int initialTasks =  SLAVES * 2 >= argc ? 1 : 2; 
 
@@ -59,8 +46,8 @@ int main(int argc, char const *argv[]){
    
     //cuando reciva la info del slave
     // for(int i = 0; i < 10; i++)
-         
-    ptr_write = writeShm(0);
+   
+    ptr_write = writeShm(ptr_write);
    
     // setvbuf(stdout,NULL,_IONBF,0);
     fclose(results);
@@ -211,10 +198,9 @@ char *  createShm(){
     return ptr;   
 }   
 
-char* writeShm(int offset){
+char* writeShm(char *ptr){
     
     int fd;
-    char *ptr;
     char buff[50];
 
     fd = shm_open(SHM_NAME, O_RDWR, 0);

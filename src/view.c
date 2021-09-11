@@ -1,23 +1,13 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/mman.h>
-#include <sys/stat.h>        /* For mode constants */
-#include <fcntl.h>           /* For O_* constants */
-#include <unistd.h>
-#include <sys/types.h>
-#include <errno.h>
-#include <string.h>
-#include "errors.h"
-#include "shm.h"
-#include <semaphore.h>
-
-extern sem_t* semaphore;
+#define _XOPEN_SOURCE 500
+#include "view.h"
 
 int main(int argc, char const *argv[]) {
     int fd;
     char *ptr_read;
     struct stat shm_st;
     int fileCount;
+
+    sem_t * semaphore = sem_open(SEM,O_CREAT,SEM_FLAGS);
 
     if(argc ==2){
         fileCount = atoi(argv[1]);

@@ -9,10 +9,10 @@ sudo apt-get install minisat
 
 # Compile and run unit tests
 
-To compile MemoryManagerTest run:
+To compile run:
 
 $> make all
-$> ./MemoryManagerTest.out
+$> ./master
 
 # Static Code Analysis
 
