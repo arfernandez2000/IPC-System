@@ -49,6 +49,7 @@ int main(int argc, char const *argv[]) {
     int i=0;
     while (i < fileCount){
         //semaforo para ver que  no este escribiendo
+        sem_wait(shm);
         int size = printf("%s \n", ptr);
         ptr += size+1;
         i++;

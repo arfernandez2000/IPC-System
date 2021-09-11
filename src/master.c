@@ -53,8 +53,9 @@ int main(int argc, char const *argv[]){
    
     //cuando reciva la info del slave
     // for(int i = 0; i < 10; i++)
-    //     writeShm();
-
+         
+    // writeShm();
+    // sem_post(shm);
     // setvbuf(stdout,NULL,_IONBF,0);
     fclose(results);
     
@@ -95,8 +96,8 @@ void createSlaves(int fileCount, int initialTasks, const char* files[]) {
 
     //for por cada slave -> cortarlo si me quedo sin archivos antes de llenar los 7 slaves
     
-    for (int i = 0; i < slaves; i++) {
-        printf("for num: %d", i);
+    // for (int i = 0; i < slaves; i++) {
+    //     printf("for num: %d", i);
         
         if(pipe(tasks) < 0){
             error("Error al crear pipe task");
@@ -137,7 +138,7 @@ void createSlaves(int fileCount, int initialTasks, const char* files[]) {
             if (execv(SLAVE_PATH, filesToSend) < 0) {
                 error("Error no funciona execv");
             }
-        }
+        // }
     }
     //TODO-funcion para el select
     char readBuf[4900] = {0};

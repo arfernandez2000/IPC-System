@@ -18,6 +18,7 @@ int main(int argc, char * argv[]) {
     for (int i = 0; i < argc; i++) {
         solver(argv[i]);
     }
+
     return 0;
 
 }
