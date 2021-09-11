@@ -9,10 +9,21 @@
 #include "errors.h"
 
 #define BUFFER_SIZE 4096
-// ./slave pipename filepath
-int main(int argc, char * argv[]){
 
-    char *filePath = argv[2];
+void solver(char* pathName);
+
+// ./slave pipename filepath
+int main(int argc, char * argv[]) {
+
+    for (int i = 0; i < argc; i++) {
+        solver(argv[i]);
+    }
+    return 0;
+
+}
+
+void solver(char* pathName) {
+    char *filePath = pathName;
     
     char * parser = "grep -o -e \"Number of.*[0-9]\\+\" -e \"CPU time.*\" -e \".*SATISFIABLE\"";
     char command[BUFFER_SIZE];
@@ -37,11 +48,13 @@ int main(int argc, char * argv[]){
         error("Master response build failed");
     }
     
-    
-    int fdOUT;
-    fdOUT = open(argv[1], O_WRONLY);
-    write(fdOUT,masterResult,BUFFER_SIZE);
-    close(fdOUT);
 
-    return 0;
+
+    printf("%s", masterResult);
+    
+    // int fdOUT;
+    // fdOUT = open(argv[1], O_WRONLY);
+    // write(fdOUT,masterResult,BUFFER_SIZE);
+    // close(fdOUT);
+
 }
