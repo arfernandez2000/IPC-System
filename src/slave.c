@@ -15,7 +15,12 @@ void solver(char* pathName);
 // ./slave pipename filepath
 int main(int argc, char * argv[]) {
 
+    FILE* fdPruebaSlave;
+    fdPruebaSlave = fopen("logSlave.txt", "w+") ;
+    fputs(argv[0], fdPruebaSlave);
+
     for (int i = 0; i < argc; i++) {
+        fputs("alog", fdPruebaSlave);
         solver(argv[i]);
     }
 
@@ -48,5 +53,6 @@ void solver(char* pathName) {
     if(sprintf(masterResult,"PID: %d \nFilename: %s\n%s\n",getpid(),filePath,resultSolver) < 0){
         error("Master response build failed");
     }
+    
     printf("%s", masterResult);
 }
