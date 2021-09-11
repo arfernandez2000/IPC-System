@@ -6,15 +6,17 @@ typedef struct slaveinfo {
 
     int fdAnswersRead;
     int fdTasksWrite;
-    char isBeingUsed;
+    char status;
+    int tasks;
 
 } slaveinfo;
 
-void createSlaves(int fileCount, int initTasks, const char* files[]);
-void assignTasks();
+int createSlaves(int fileCount, int initTasks, char* files[], slaveinfo* slave);
+void assignTasks(slaveinfo* slave, int slaveCount, int remainingTasks, FILE* results, char* tasks[]);
+void writeResult(FILE* results, slaveinfo slave);
+void newTask(slaveinfo slave, char* tasks[], int* remainingTasks);
 void createShm();
 void writeShm();
-int assignProcesses(int fileCount);
 
 
 #endif

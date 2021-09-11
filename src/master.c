@@ -15,17 +15,11 @@
 #define WRITE 1
 #define STDOUT 1
 #define STDIN 0
+#define USED 1
+#define UNUSED 0
 
 #define SLAVES 7
-#define DIRECTION_SENSE 2
-#define RW_END 2
 #define SLAVE_PATH "./slave"
-
-void createSlaves(int fileCount, int initialTasks, const char* files[]);
-void assignTasks();
-void createShm();
-void writeShm();
-int assignProcesses(int fileCount);
 
 
 int main(int argc, char const *argv[]){
@@ -37,8 +31,6 @@ int main(int argc, char const *argv[]){
  
     // createShm();
 
-    printf("%d", argc - 1);
-    
     int initialTasks =  SLAVES * 2 >= argc ? 1 : 2;
 
     FILE * results;
@@ -47,9 +39,16 @@ int main(int argc, char const *argv[]){
         error("No se pudo crear el archivo results");
     }
 
-    createSlaves(argc - 1, initialTasks, argv);
+    slaveinfo slave;
+    int slaveCount = (argc - 1 > SLAVES)? SLAVES : argc - 1;
+    int remainingTaks = argc - 1;
 
-    //assignTasks();
+    int created = createSlaves(slaveCount, initialTasks, (char**) argv, &slave);
+    if(created == 1){
+        remainingTaks -= slaveCount*initialTasks;
+    }
+
+    assignTasks(&slave, slaveCount, remainingTaks, results, (char**) argv + 1);
    
     //cuando reciva la info del slave
     // for(int i = 0; i < 10; i++)
@@ -77,26 +76,17 @@ void createShm(){
         
 }
 
-void createSlaves(int fileCount, int initialTasks, const char* files[]) {
-
-    printf("entre");
-
-    FILE* fdPrueba;
-    fdPrueba = fopen("log.txt", "w+") ;
+int createSlaves(int slaveCount, int initialTasks, char* files[], slaveinfo* slave) {
 
     int tasks[2];
     int answers[2];
 
     int counter = 0;
-    int slaves = (fileCount > SLAVES)? SLAVES : fileCount;
-    printf(slaves);
-
-    const char** filesToSend = {0};
+    char* filesToSend[BUF_SIZE] = {0};
 
     //for por cada slave -> cortarlo si me quedo sin archivos antes de llenar los 7 slaves
     
-    for (int i = 0; i < slaves; i++) {
-        printf("for num: %d", i);
+    for (int i = 0; i < slaveCount; i++) {
         
         if(pipe(tasks) < 0){
             error("Error al crear pipe task");
@@ -105,8 +95,10 @@ void createSlaves(int fileCount, int initialTasks, const char* files[]) {
         if(pipe(answers) < 0){
             error("Error al crear pipe answer");
         }
+
+        int pid;
     
-        if (fork() == 0) {
+        if ((pid = fork()) == 0) {
 
             if ( dup2(answers[WRITE], STDOUT) < 0) {
                 error("Error al hacer el dup2 de STDOUT");
@@ -137,28 +129,53 @@ void createSlaves(int fileCount, int initialTasks, const char* files[]) {
             if (execv(SLAVE_PATH, filesToSend) < 0) {
                 error("Error no funciona execv");
             }
+        } else if (pid < 0) {
+            error("Error del fork");
+        }
+        
+        slave[i].fdAnswersRead = answers[READ];
+        slave[i].fdTasksWrite = tasks[READ];
+        slave[i].status = USED; 
+        slave[i].tasks = initialTasks;
+        if(close(tasks[READ]) < 0 || close(answers[WRITE]) < 0){
+            error("Error al cerrar pipes");
         }
     }
-    //TODO-funcion para el select
-    char readBuf[4900] = {0};
-    sleep(2);
-    if (read(answers[READ], readBuf, 4096) < -1) {
-        error("Error al leer el answers, READ");
-    }
-
-	fputs(readBuf,fdPrueba);
-    fclose(fdPrueba);
-
+    return 1;
 }
 
-// void assignTasks(){
-//     fd_set fd;
-//     int fdSlave;
-//     FD_ZERO(&fd);
-//     FD_SET(0, &fd);
-//     int ready = select(fdSlave, &fd, NULL. NULL, NULL);
-    
-// }
+void assignTasks(slaveinfo* slave, int slaveCount, int remainingTasks, FILE* results, char* tasks[]){
+
+    while (remainingTasks >= 0) {
+        fd_set fdSet;
+        FD_ZERO(&fdSet);
+        FD_SET(0, &fdSet);
+
+        int fd;
+        int maxFd = -1;
+        for(int i = 0; i < slaveCount; i++) {
+            if( slave[i].status ){
+                fd = slave[i].fdAnswersRead;
+                FD_SET(fd, &fdSet);
+                maxFd = (maxFd > fd)? maxFd : fd;              
+            }
+        }
+        int ready = select(maxFd, &fdSet, NULL, NULL, NULL);
+        if(ready < 0){
+            error("Error al crear el select");
+        }
+
+        for(int i = 0; ready > 0 && i < slaveCount; i++){
+            if(FD_ISSET(slave[i].fdAnswersRead, &fdSet)) {
+                writeResult(results, slave[i]);
+                if(slave[i].tasks == 0 && remainingTasks != 0){
+                    newTask(slave[i], tasks, &remainingTasks);
+                }
+                ready--;
+            }
+        }
+    }   
+}
 
 /* Transfer blocks of data from stdin to shared memory */
 
@@ -183,4 +200,18 @@ void writeShm(){
     memcpy(ptr,buff, sizeof(buff));
 
     close(fd);
+}
+
+void writeResult(FILE* results, slaveinfo slave){
+    char readBuff[BUF_SIZE] ={0};
+    read(slave.fdAnswersRead, readBuff, BUF_SIZE);
+    fprintf(results, "%s\n", readBuff);
+}
+
+void newTask(slaveinfo slave, char* tasks[], int* remainingTasks) {
+    char* file = tasks[sizeof(tasks[0]) - *remainingTasks];
+    if(write(slave.fdTasksWrite, file, BUF_SIZE) < 0){
+        error("Error al escribir en el pipe");
+    }
+    *remainingTasks -= 1;
 }
