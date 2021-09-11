@@ -9,7 +9,7 @@
 #define USED 1
 #define UNUSED 0
 
-#define SLAVES 2
+#define SLAVES 3
 #define SLAVE_PATH "./slave"
 
 sem_t* semaphore;
@@ -43,8 +43,8 @@ int main(int argc, char const *argv[]){
         remainingTaks -= slaveCount*initialTasks;
     }
 
-
-    //assignTasks(&slave, slaveCount, remainingTaks, results, (char**) argv + 1);
+    printf("sali de create");
+    assignTasks(&slave, slaveCount, remainingTaks, results, (char**) argv + 1);
    
     //cuando reciva la info del slave
     // for(int i = 0; i < 10; i++)
@@ -62,23 +62,22 @@ int main(int argc, char const *argv[]){
 int createSlaves(int slaveCount, int initialTasks, char* files[], slaveinfo* slave) {
 
 
-    FILE* fdPrueba;
-    fdPrueba = fopen("log.txt", "w+") ;
+    // FILE* fdPrueba;
+    // fdPrueba = fopen("log.txt", "w+") ;
 
     int tasks[2];
     int answers[2];
 
     char* filesToSend[BUF_SIZE] = {0};
     int counter = 1;
-    char readBuf[4900] = {0};    
+    char readBuf[10000] = {0};    
 
     printf("initial Tasks: %d\n", initialTasks);
     printf("slaves count: %d\n", slaveCount);
 
     //for por cada slave -> cortarlo si me quedo sin archivos antes de llenar los 7 slaves
     
-    for (int i = 0; i < slaveCount; i++) {  
-        printf("esclavo: %d\t", i + 1);      
+    for (int i = 0; i < slaveCount; i++) {       
         if(pipe(tasks) < 0) {
             error("Error al crear pipe task");
         }
@@ -90,6 +89,10 @@ int createSlaves(int slaveCount, int initialTasks, char* files[], slaveinfo* sla
         int pid;
     
         if ((pid = fork()) == 0) {
+            
+            for (int j = 0; j < initialTasks; j++) {
+                filesToSend[j] = files[counter++];
+            }
 
             if ( dup2(answers[WRITE], STDOUT) < 0) {
                 error("Error al hacer el dup2 de STDOUT");
@@ -98,7 +101,7 @@ int createSlaves(int slaveCount, int initialTasks, char* files[], slaveinfo* sla
             if ( dup2(tasks[READ], STDIN) < 0) {
                 error("Error al hacer el dup2 de STDIN");
             }
-
+            
             if (close(tasks[READ]) < 0) {
                 error("Error al cerras el fd de tasks, READ");
             }
@@ -112,11 +115,6 @@ int createSlaves(int slaveCount, int initialTasks, char* files[], slaveinfo* sla
                 error("Error al cerras el fd de answers, WRITE");
             }
         
-            for (int j = 0; j < initialTasks; j++) {
-                printf("file: %s\n", files[counter]);
-                filesToSend[j] = files[counter++];
-            }
-
             if (execv(SLAVE_PATH, filesToSend) < 0) {
                 error("Error no funciona execv");
             }
@@ -125,24 +123,33 @@ int createSlaves(int slaveCount, int initialTasks, char* files[], slaveinfo* sla
         }
         
         slave[i].fdAnswersRead = answers[READ];
-        slave[i].fdTasksWrite = tasks[READ];
+        slave[i].fdTasksWrite = tasks[WRITE];
         slave[i].status = USED; 
         slave[i].tasks = initialTasks;
 
-        printf("fdAnswersRead: %d, fdTasksWrite: %d, tasks: %d\n", slave[i].fdAnswersRead, slave[i].fdTasksWrite, slave[i].tasks);
+        printf("fdAnswersRead: %d, fdTasksWrite: %d, tasks: %d\ncounter: %d\n", slave[i].fdAnswersRead, slave[i].fdTasksWrite, slave[i].tasks, counter);
         if(close(tasks[READ]) < 0 || close(answers[WRITE]) < 0){
             error("Error al cerrar pipes");
         }
+        counter += initialTasks;
     }
+    
     //TODO-funcion para el select
-    sleep(2);
-    if (read(answers[READ], readBuf, 4900) < -1) {
-        error("Error al leer el answers, READ");
-    }
-
-	fputs(readBuf,fdPrueba);
+    // printf("despues del for");
+    // sleep(2);
+    
+    // for (int i = 0; i < slaveCount; i++) {
+    //     if (read(slave[i].fdAnswersRead, readBuf, 10000) < 0) {
+    //         error("Error al leer el answers, READ");
+    //     }
+    //     fprintf(fdPrueba, "%s\n", readBuf);
+    //     close(slave[i].fdAnswersRead);
+    // }
+	
     // fputs("buenas\n",fdPrueba);
-    fclose(fdPrueba);
+    // fclose(fdPrueba);
+    read(slave[0].fdAnswersRead, readBuf, 10000);
+    printf("chau create");
     return 1;
 }
 

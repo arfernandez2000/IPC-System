@@ -28,6 +28,8 @@ int main(int argc, char * argv[]) {
         solver(argv[i]);
     }
 
+    fclose(fdPruebaSlave);
+
     return 0;
 
 }
