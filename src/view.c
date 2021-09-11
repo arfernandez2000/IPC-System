@@ -9,13 +9,16 @@
 #include <string.h>
 #include "errors.h"
 #include "shm.h"
+#include <semaphore.h>
+
+extern sem_t* semaphore;
 
 int main(int argc, char const *argv[]) {
     int fd;
-    char *ptr;
+    char *ptr_read;
     struct stat shm_st;
     int fileCount;
-    
+
     if(argc ==2){
         fileCount = atoi(argv[1]);
     }
@@ -27,7 +30,6 @@ int main(int argc, char const *argv[]) {
     else{
         error("Wrong number  of arguments");
     }
-
     fd = shm_open (SHM_NAME,  O_RDONLY  , 00400); /* open s.m object*/
     if(fd == -1)
     {
@@ -39,21 +41,23 @@ int main(int argc, char const *argv[]) {
         perror("fstat failed");
     }
 
-    ptr = mmap(NULL, shm_st.st_size, PROT_READ, MAP_SHARED, fd, 0);
+    ptr_read = mmap(NULL, shm_st.st_size, PROT_READ, MAP_SHARED, fd, 0);
 
-    if(ptr == MAP_FAILED)
+    if(ptr_read == MAP_FAILED)
     {
         perror("Map failed");
     }
 
     int i=0;
     while (i < fileCount){
-        //semaforo para ver que  no este escribiendo
-        sem_wait(shm);
-        int size = printf("%s \n", ptr);
-        ptr += size+1;
-        i++;
-        //habilita el semaforo para escribir
+       
+       if(sem_wait(semaphore) < 0){
+        error("Semaphore View Error");
+       };
+
+       int size = printf("%s \n", ptr_read);
+       ptr_read += size+1;
+       i++;
     }
 
     close(fd);

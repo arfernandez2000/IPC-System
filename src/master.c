@@ -10,6 +10,8 @@
 #include <string.h>
 #include "errors.h"
 #include "master.h"
+#include <semaphore.h>
+#include <string.h>
 
 #define READ 0
 #define WRITE 1
@@ -21,12 +23,7 @@
 #define RW_END 2
 #define SLAVE_PATH "./slave"
 
-void createSlaves(int fileCount, int initialTasks, const char* files[]);
-void assignTasks();
-void createShm();
-void writeShm();
-int assignProcesses(int fileCount);
-
+sem_t* semaphore;
 
 int main(int argc, char const *argv[]){
     if(argc < 2){
@@ -34,12 +31,14 @@ int main(int argc, char const *argv[]){
     }
     
     sleep(2);
- 
-    // createShm();
+    
+    char * ptr_write;
+    createShm();
+    semaphore = sem_open("/semaphore",O_CREAT,(S_IWUSR | S_IRUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH));
 
     printf("%d", argc - 1);
     
-    int initialTasks =  SLAVES * 2 >= argc ? 1 : 2;
+    int initialTasks =  SLAVES * 2 >= argc ? 1 : 2; 
 
     FILE * results;
     results = fopen("results.txt", "w");
@@ -47,18 +46,20 @@ int main(int argc, char const *argv[]){
         error("No se pudo crear el archivo results");
     }
 
-    createSlaves(argc - 1, initialTasks, argv);
+    //createSlaves(argc - 1, initialTasks, argv);
 
     //assignTasks();
    
     //cuando reciva la info del slave
     // for(int i = 0; i < 10; i++)
          
-    // writeShm();
-    // sem_post(shm);
+    writeShm(0);
+   
     // setvbuf(stdout,NULL,_IONBF,0);
     fclose(results);
-    
+    if( sem_close(semaphore) < 0)
+        error("Semaphore close failed");
+
     return 0;
 }
 
@@ -90,9 +91,9 @@ void createSlaves(int fileCount, int initialTasks, const char* files[]) {
 
     int counter = 0;
     int slaves = (fileCount > SLAVES)? SLAVES : fileCount;
-    printf(slaves);
+    //printf(slaves);
 
-    const char** filesToSend = {0};
+    char** filesToSend = {0};
 
     //for por cada slave -> cortarlo si me quedo sin archivos antes de llenar los 7 slaves
     
@@ -163,7 +164,7 @@ void createSlaves(int fileCount, int initialTasks, const char* files[]) {
 
 /* Transfer blocks of data from stdin to shared memory */
 
-void writeShm(){
+char* writeShm(int offset){
     
     int fd;
     char *ptr;
@@ -173,15 +174,22 @@ void writeShm(){
     if (-1 == fd)
        error("shm_open failed");
     
-    ptr = mmap(NULL, 50, PROT_WRITE, MAP_SHARED, fd, 0);
+    ptr = mmap(NULL, 50, PROT_WRITE, MAP_SHARED, fd, offset);
 
     if(ptr == MAP_FAILED){
         error("Map failed");
     }
 
     fgets(buff, sizeof(buff), stdin);
+    size_t strLength = strlen(buff);
+    memcpy(ptr,buff, strLength);
 
-    memcpy(ptr,buff, sizeof(buff));
+    ptr+=strLength*sizeof(size_t);
 
     close(fd);
+
+    if(sem_post(semaphore) < 0 ){
+        error("Semaphore Master Error");
+    }
+    return ptr;
 }

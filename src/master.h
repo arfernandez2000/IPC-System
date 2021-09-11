@@ -13,7 +13,7 @@ typedef struct slaveinfo {
 void createSlaves(int fileCount, int initTasks, const char* files[]);
 void assignTasks();
 void createShm();
-void writeShm();
+char * writeShm(int offset);
 int assignProcesses(int fileCount);
 
 
