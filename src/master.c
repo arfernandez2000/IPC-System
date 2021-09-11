@@ -9,7 +9,7 @@
 #include "shm.h"
 #include <string.h>
 #include "errors.h"
-
+#include "master.h"
 
 #define READ 0
 #define WRITE 1
@@ -19,13 +19,9 @@
 #define SLAVES 7
 #define DIRECTION_SENSE 2
 #define RW_END 2
-
 #define SLAVE_PATH "./slave"
-#define P_NAME "/tmp/mi_fifo"
 
-static int slaves[SLAVES]={0};
-
-void createSlaves(int fileCount, int initTasks, const char* files[]);
+void createSlaves(int fileCount, int initialTasks, const char* files[]);
 void assignTasks();
 void createShm();
 void writeShm();
@@ -33,27 +29,25 @@ int assignProcesses(int fileCount);
 
 
 int main(int argc, char const *argv[]){
-    
     if(argc < 2){
         error("Cantidad incorrecta de argumentos");
     }
+    
+    sleep(2);
  
     // createShm();
 
-    // Imprime la cantidad de archivos para que el view sepa cuando parar
-    // printf("%d", argc - 1);
-
-    sleep(2);
-
-    int initTasks = assignProcesses(argc);
+    printf("%d", argc - 1);
     
+    int initialTasks =  SLAVES * 2 >= argc ? 1 : 2;
+
     FILE * results;
     results = fopen("results.txt", "w");
     if(results == NULL){
         error("No se pudo crear el archivo results");
     }
-    
-    createSlaves(argc - 1, initTasks, argv);
+
+    createSlaves(argc - 1, initialTasks, argv);
 
     //assignTasks();
    
@@ -62,16 +56,9 @@ int main(int argc, char const *argv[]){
     //     writeShm();
 
     // setvbuf(stdout,NULL,_IONBF,0);
+    fclose(results);
+    
     return 0;
-}
-
-int assignProcesses(int fileCount) {
-    if(SLAVES * 2 >= fileCount) {
-        return 1;  
-    }
-    else {
-        return 2;
-    }    
 }
 
 void createShm(){
@@ -90,7 +77,7 @@ void createShm(){
         
 }
 
-void createSlaves(int fileCount, int initTasks, const char* files[]) {
+void createSlaves(int fileCount, int initialTasks, const char* files[]) {
 
     printf("entre");
 
@@ -143,7 +130,7 @@ void createSlaves(int fileCount, int initTasks, const char* files[]) {
             }
         
             
-            for (int j = 0; j < initTasks; j++) {
+            for (int j = 0; j < initialTasks; j++) {
                 filesToSend[j] = files[counter++];
             }
         
@@ -152,7 +139,7 @@ void createSlaves(int fileCount, int initTasks, const char* files[]) {
             }
         }
     }
-
+    //TODO-funcion para el select
     char readBuf[4900] = {0};
     sleep(2);
     if (read(answers[READ], readBuf, 4096) < -1) {

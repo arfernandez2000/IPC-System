@@ -47,14 +47,5 @@ void solver(char* pathName) {
     if(sprintf(masterResult,"PID: %d \nFilename: %s\n%s\n",getpid(),filePath,resultSolver) < 0){
         error("Master response build failed");
     }
-    
-
-
     printf("%s", masterResult);
-    
-    // int fdOUT;
-    // fdOUT = open(argv[1], O_WRONLY);
-    // write(fdOUT,masterResult,BUFFER_SIZE);
-    // close(fdOUT);
-
 }
