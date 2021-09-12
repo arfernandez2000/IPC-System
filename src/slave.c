@@ -8,7 +8,6 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include <errno.h>
 #include "errors.h"
 
@@ -23,7 +22,16 @@ int main(int argc, char * argv[]) {
         solver(argv[i]);
     }
 
-    
+    // char path[BUFFER_SIZE];
+    // int size = 0;
+    // //read -> solver
+    // while ((size = read(STDIN_FILENO, path, BUFFER_SIZE)) != 0) {
+    //     if (size < 0) {
+    //         error("Error al leer del pipe");
+    //     }
+    //     path[size] = 0;
+    //     solver(path);
+    // }
 
     return 0;
 

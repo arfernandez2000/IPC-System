@@ -9,16 +9,17 @@
 #define USED 1
 #define UNUSED 0
 
-#define SLAVES 5
+#define SLAVES 3
 #define SLAVE_PATH "./slave"
 
 sem_t* semaphore;
+int currentTask = 0;
 int main(int argc, char const *argv[]){
     if(argc < 2){
         error("Cantidad incorrecta de argumentos");
     }
 
-    setvbuf(stdout,NULL,_IONBF,0);
+    //setvbuf(stdout,NULL,_IONBF,0);
     char * ptr_write;
     ptr_write = createShm();
 
@@ -34,17 +35,15 @@ int main(int argc, char const *argv[]){
         error("No se pudo crear el archivo results");
     }
 
-    slaveinfo slave;
     int slaveCount = (argc - 1 > SLAVES)? SLAVES : argc - 1;
-    int remainingTaks = argc - 1;
+    slaveinfo slave[slaveCount];
+    int remainingTasks = argc - 1;
 
-    int created = createSlaves(slaveCount, initialTasks, (char**) argv, &slave);
-    if(created == 1){
-        remainingTaks -= slaveCount*initialTasks;
-    }
+    int created = createSlaves(slaveCount, initialTasks, (char**) argv, slave);
+    printf("%d\n",remainingTasks);
 
     printf("sali de create\n");
-    assignTasks(&slave, slaveCount, remainingTaks, results, (char**) argv + 1);
+    assignTasks(slave, slaveCount, remainingTasks, results, (char**) argv + 1);
     printf("LPM\n");
 
     //ptr_write = writeShm(ptr_write);
@@ -57,7 +56,7 @@ int main(int argc, char const *argv[]){
     //if( sem_close(semaphore) < 0)
     //    error("Semaphore close failed");
 
-    closeSlaves(&slave, slaveCount);   
+    closeSlaves(slave, slaveCount);   
     return 0;
 }
 
@@ -133,6 +132,7 @@ int createSlaves(int slaveCount, int initialTasks, char* files[], slaveinfo* sla
             error("Error al cerrar pipes");
         }
         counter += initialTasks;
+        currentTask += slaveCount*initialTasks;
     }
     
     //TODO-funcion para el select
@@ -163,8 +163,8 @@ void closeSlaves(slaveinfo* slave, int slaveCount){
 
 void assignTasks(slaveinfo* slave, int slaveCount, int remainingTasks, FILE* results, char* tasks[]){
 
-    while (remainingTasks >= 0) {
-        printf("assignTask entre");
+    while (remainingTasks > 0) {
+        printf("assignTask entre\n");
         fd_set fdSet;
         FD_ZERO(&fdSet);
         FD_SET(0, &fdSet);
@@ -173,25 +173,29 @@ void assignTasks(slaveinfo* slave, int slaveCount, int remainingTasks, FILE* res
         int maxFd = -1;
         for(int i = 0; i < slaveCount; i++) {
             if( slave[i].status ){
+                printf("fd al set con slave %d\n", i + 1);
                 fd = slave[i].fdAnswersRead;
                 FD_SET(fd, &fdSet);
                 maxFd = (maxFd > fd)? maxFd : fd;              
             }
         }
-        int ready = select(maxFd, &fdSet, NULL, NULL, NULL);
+        
+        int ready = select(maxFd + 1, &fdSet, NULL, NULL, NULL);
         if(ready < 0){
             error("Error al crear el select");
         }
 
-        for(int i = 0; ready > 0 && i < slaveCount; i++){
+        for(int i = 0; i < slaveCount; i++){
             if(FD_ISSET(slave[i].fdAnswersRead, &fdSet)) {
                 writeResult(results, slave[i]);
+                if(slave[i].tasks > 1){
+                    remainingTasks--;
+                }
                 slave[i].tasks--;
                 if(slave[i].tasks == 0 && remainingTasks != 0){
-                    newTask(slave[i], tasks, &remainingTasks);
-                } else if(remainingTasks == 0)
                     remainingTasks--;
-                ready--;
+                    //newTask(slave[i], tasks);
+                }
             }
         }
     }   
@@ -230,7 +234,7 @@ char* writeShm(char *ptr){
    
     fgets(buff, sizeof(buff), stdin);
     size_t strLength = strlen(buff);
-    memcpy(ptr,buff, strLength);
+    memcpy(ptr, buff, strLength);
 
     ptr+=strLength*sizeof(size_t);
 
@@ -244,14 +248,13 @@ char* writeShm(char *ptr){
 void writeResult(FILE* results, slaveinfo slave){
     char readBuff[BUF_SIZE] ={0};
     read(slave.fdAnswersRead, readBuff, BUF_SIZE);
-    fprintf(results, "%s\n", readBuff);
+    fputs(readBuff, results);
 }
 
-void newTask(slaveinfo slave, char* tasks[], int* remainingTasks) {
-    char* file = tasks[sizeof(tasks[0]) - *remainingTasks];
+void newTask(slaveinfo slave, char* tasks[]) {
+    char* file = tasks[currentTask++];
     if(write(slave.fdTasksWrite, file, BUF_SIZE) < 0){
         error("Error al escribir en el pipe");
     }
-    *remainingTasks -= 1;
-
+    slave.tasks = 1;
 }
