@@ -14,25 +14,19 @@
 #define BUFFER_SIZE 4096
 
 void solver(char* pathName);
+void waitTasks();
 
 // ./slave pipename filepath
 int main(int argc, char * argv[]) {
 
+    if( setvbuf(stdout, NULL, _IONBF, 0) ){
+        error("Setvbuf failed");
+    } 
     for (int i = 0; i < argc; i++) {
         solver(argv[i]);
     }
-
-    // char path[BUFFER_SIZE];
-    // int size = 0;
-    // //read -> solver
-    // while ((size = read(STDIN_FILENO, path, BUFFER_SIZE)) != 0) {
-    //     if (size < 0) {
-    //         error("Error al leer del pipe");
-    //     }
-    //     path[size] = 0;
-    //     solver(path);
-    // }
-
+    
+    waitTasks();
     return 0;
 
 }
@@ -64,4 +58,19 @@ void solver(char* pathName) {
     }
     
     printf("%s", masterResult);
+}
+
+void waitTasks(){
+    
+    char task[BUFFER_SIZE + 1] = {0}; 
+    int count = 0;
+    
+    while ( ( count = read(fileno(stdin), task, BUFFER_SIZE) ) != 0){
+
+        if(count == ERROR){
+            error("Read failed");
+        }
+        task[count] = 0;
+        solver(task);
+    }
 }

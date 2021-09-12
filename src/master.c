@@ -208,6 +208,7 @@ void assignTasks(slaveinfo* slave, int slaveCount, int remainingTasks, FILE* res
                     if(slave[i].tasks == 0 && remainingTasks != 0){
                         remainingTasks--;
                         if(currentTask <= totalTasks) {
+                            printf("voy a asignarle una nueva task a mi slave");
                             newTask(&slave[i], tasks);
                         }   
                     }
@@ -217,7 +218,7 @@ void assignTasks(slaveinfo* slave, int slaveCount, int remainingTasks, FILE* res
     }   
 }
 
-char *  createShm(){
+char *  ScreateShm(){
     int fd;
     char * ptr;
 
@@ -275,14 +276,13 @@ int writeResult(FILE* results, slaveinfo slave){
 
 void newTask(slaveinfo* slave, char* tasks[]) {
     char* file = tasks[currentTask++];
-    printf("%s\n", tasks[currentTask - 1]);
-    printf("fdTaskWrite: %d\n", slave->fdTasksWrite);
+
     if(write(slave->fdTasksWrite, file, sizeof(file) + 1) < 0){
         error("Error al escribir en el pipe");
     }
-    printf("AAAAAAA\n");
-    char readBuff[BUF_SIZE] ={0};
-    read(slave->fdTasksWrite, readBuff, BUF_SIZE);
+
+    char readBuff[4096] ={0};
+    read(slave->fdTasksWrite, readBuff, 4096);
     printf("%s\n", readBuff);
     slave->tasks = 1;
 }
