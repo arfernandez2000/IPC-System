@@ -25,15 +25,16 @@ typedef struct slaveinfo {
 
 } slaveinfo;
 
-int createSlaves(int slaveCount, int initialTasks, char* files[], slaveinfo* slave);
+void createSlaves(int slaveCount, int initialTasks, char* files[], slaveinfo* slave);
 void closeSlaves(slaveinfo* slave, int slaveCount);
 void closeWriteSlaves(slaveinfo* slave, int slaveCount);
 void assignTasks(slaveinfo* slave, int slaveCount, int remainingTasks, FILE* results, char* tasks[]);
 int writeResult(FILE* results, slaveinfo slave);
 void newTask(slaveinfo* slave, char* tasks[]);
-char* createShm();
-char * writeShm(char * ptr_write);
+char* createShm(int tasks);
+void writeShm( char * results);
 int assignProcesses(int fileCount);
+void closeShm();
 
 
 #endif

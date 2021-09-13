@@ -2,53 +2,55 @@
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #define _XOPEN_SOURCE 500
 #include "view.h"
-
+// ./view filecount
 int main(int argc, char const *argv[]) {
+
     int fd;
     char *ptr_read;
     struct stat shm_st;
-    int fileCount;
+    int fileCount= 0;
 
-    sem_t * semaphore = sem_open(SEM,O_CREAT,SEM_FLAGS);
+    //sem_t * semaphore = sem_open(SEM,O_CREAT,SEM_FLAGS);
 
-    if(argc ==2){
+    if(argc == 2){
         fileCount = atoi(argv[1]);
     }
     else if( argc == 1){
-        char buffer[BUF_SIZE];
-        read(STDIN_FILENO, buffer, BUF_SIZE);
+        char buffer[SHM_SIZE];
+        read(STDIN_FILENO, buffer, SHM_SIZE);
         fileCount = atoi(buffer); 
     }
     else{
-        error("Wrong number  of arguments");
+        error("Cantidad incorrecta de argumentos");
     }
+
     fd = shm_open (SHM_NAME,  O_RDONLY  , 00400); /* open s.m object*/
     if(fd == -1)
     {
-        perror("shm_open failed");
+        error("Shared Memory open fallo");
     }
     
     if(fstat(fd, &shm_st) == -1)
     {
-        perror("fstat failed");
+        perror("fstat fallo");
     }
-
+  
     ptr_read = mmap(NULL, shm_st.st_size, PROT_READ, MAP_SHARED, fd, 0);
 
     if(ptr_read == MAP_FAILED)
     {
-        perror("Map failed");
+        error("Fallo el mapeo de la shared memory");
     }
 
     int i=0;
     while (i < fileCount){
        
-       if(sem_wait(semaphore) < 0){
-        error("Semaphore View Error");
-       };
+    // //    if(sem_wait(semaphore) < 0){
+    // //     error("Semaphore View Error");
+    // //    };
 
-       int size = printf("%s \n", ptr_read);
-       ptr_read += size+1;
+       printf("%s \n", ptr_read);
+       ptr_read += SHM_SIZE;
        i++;
     }
 
