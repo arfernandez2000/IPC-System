@@ -2,6 +2,6 @@
 #define ERRORS_H
 
 #define ERROR -1
-void error(char * message);
+void error(char *message);
 
 #endif
