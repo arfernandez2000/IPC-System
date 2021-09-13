@@ -12,10 +12,11 @@
 #define SLAVES 3
 #define SLAVE_PATH "./slave"
 
-sem_t semaphore;
+// sem_t semaphore;
 int currentTask = 1;
 int totalTasks;
 char *ptr_write;
+sem_t * semaphore;
 
 int main(int argc, char const *argv[]){
     if(argc < 2){
@@ -25,9 +26,9 @@ int main(int argc, char const *argv[]){
         error("Setvbuf failed");
     }
     
-    ptr_write = createShm(argc-1);    
+    ptr_write = createShm(argc-1);   
 
-    sem_t * semaphore = sem_open(SEM,O_CREAT,SEM_FLAGS);
+    semaphore = sem_open(SEM,O_CREAT,SEM_FLAGS,0);
 
     
     int initialTasks =  SLAVES * 2 >= argc ? 1 : 2; 
@@ -47,7 +48,7 @@ int main(int argc, char const *argv[]){
     sleep(2);
     
     createSlaves(slaveCount, initialTasks, (char**) argv, slave);
-    assignTasks(slave, slaveCount, remainingTasks, results, (char**) argv,semaphore);
+    assignTasks(slave, slaveCount, remainingTasks, results, (char**) argv);
 
     if(fclose(results) < 0){
         error("Error al cerrar results.txt");
@@ -163,7 +164,7 @@ void closeWriteSlaves(slaveinfo* slave, int slaveCount){
     
 }
 
-void assignTasks(slaveinfo* slave, int slaveCount, int remainingTasks, FILE* results, char* tasks[],sem_t * semaphore){
+void assignTasks(slaveinfo* slave, int slaveCount, int remainingTasks, FILE* results, char* tasks[]){
     while (remainingTasks > 0) {
         fd_set fdSet;
         FD_ZERO(&fdSet);
@@ -186,7 +187,7 @@ void assignTasks(slaveinfo* slave, int slaveCount, int remainingTasks, FILE* res
 
         for(int i = 0; i < slaveCount; i++){
             if(FD_ISSET(slave[i].fdAnswersRead, &fdSet)) {
-                if (writeResult(results, slave[i],semaphore) > 0) {
+                if (writeResult(results, slave[i]) > 0) {
                     if(slave[i].tasks > 1){
                         remainingTasks--;
                     }
@@ -249,14 +250,18 @@ void writeShm(char * results){
     return;
 }
 
-int writeResult(FILE* results, slaveinfo slave, sem_t* semaphore){
+int writeResult(FILE* results, slaveinfo slave){
     char readBuff[BUF_SIZE] ={0};
     int charRead;
     charRead = read(slave.fdAnswersRead, readBuff, BUF_SIZE);
     fputs(readBuff, results);
     fflush(results);
-    sem_wait(semaphore);
+
+    // sem_wait(semaphore);
+
     writeShm(readBuff);
+    // sem_wait(semaphore);
+
     sem_post(semaphore);
     return charRead;
 }
