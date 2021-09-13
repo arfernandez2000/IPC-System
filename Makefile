@@ -11,12 +11,14 @@ $(MASTER): %: %.c
 	@$(CC) $(GCCFLAGS) $(EXT_FILES) -o $@ $< $(GCCLIBS)
 
 check:
-	@cppcheck --quiet --enable=all --force --inconclusive src
+	cppcheck --quiet --enable=all --force --inconclusive src
 pvs-studio:
-	@pvs-studio-analyzer trace -- make
-	@pvs-studio-analyzer analyze
-	@plog-converter -a '64:1,2,3;GA:1,2,3;OP:1,2,3' -t tasklist -o report.tasks PVS-Studio.log
+	pvs-studio-analyzer trace -- make
+	pvs-studio-analyzer analyze
+	plog-converter -a '64:1,2,3;GA:1,2,3;OP:1,2,3' -t tasklist -o report.tasks PVS-Studio.log
+format: 
+	clang-format -style=file --sort-includes --Werror -i ./src/*.c ./src/*.h
 
-.PHONY: clean
 clean:
 	@rm -rf $(MASTER)
+.PHONY: all check pvs-studio clean format

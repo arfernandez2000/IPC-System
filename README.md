@@ -3,31 +3,50 @@ Primer Trabajo Práctico Obligatorio para la materia Sistemas Operativos
 
 # Requerimentos
 
-Minisat library installed
+Se necesita obligatoriamente la librería Minisat . 
 
-sudo apt-get install minisat
+sudo apt-get install minisat.
+A su vez, se debe contar con archivos .cnf en la carpeta src.
 
-# Compile and run unit tests
+# Compilación
 
-To compile run:
+Ubicarse en la  carpeta raíz. Para compilar ejecutar: 
 
 $> make all
-$> ./master
+
+Los ejecutables que se crean son master, slave y view.
+
+# Correr el programa
+Ubicarse en la carpeta src.
+Opcion 1: Utilizando solo una terminal
+
+$> ./master filename1.cnf  filename2.cnf .... | ./view
+
+Opcion 2: Utilizando dos terminales
+
+En la primer terminal ejecutar 
+
+$> ./master filename1.cnf  filename2.cnf ...
+NUMBER
+Este proceso va a imprimir en stdout un int. Debemos pasarle este número como argumento al proceso view en la segunda terminal
+
+En la segunda terminal ejecutar:
+./view NUMBER
+
 
 # Static Code Analysis
 
-To execute the static code analysis tools Cppcheck and PVS-Studio run:
+Para ejecutar la herramienta de análisis de código estático Cppcheck :
 
 $> make check
 
+Para ejecutar PVS-Studio correr:
+
+$> make pvs-studio
+
 # Formating
 
-To execute the code formatter Clang-format run:
+Para ejecutar la herramienta de formateo Clang-format ejecutar:
 
 $> make format
-
-# Compile and Execute program
-$> make all
-$> ./tp1.o
-
 
