@@ -15,12 +15,17 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#define READ 0
+#define WRITE 1
+#define STDOUT 1
+#define STDIN 0
+#define SLAVES 7
+#define SLAVE_PATH "./slave"
+
 typedef struct slaveinfo {
 	int fdAnswersRead;
 	int fdTasksWrite;
-	char status;
 	int tasks;
-
 } slaveinfo;
 
 void createSlaves(int slaveCount, int initialTasks, char *files[], slaveinfo *slave);

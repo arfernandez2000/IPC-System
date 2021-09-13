@@ -3,7 +3,7 @@ Primer Trabajo Práctico Obligatorio para la materia Sistemas Operativos
 
 # Requerimentos
 
-Se necesita obligatoriamente la librería Minisat . Para análisis estático de código se necesita PVS-STUDIO y cppcheck
+Se necesita obligatoriamente la librería Minisat . Para análisis estático de código se necesita *PVS-STUDIO* y *cppcheck* y para formatear la librería *Clang-Format*.
 
 sudo apt-get install minisat.
 

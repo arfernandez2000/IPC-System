@@ -2,15 +2,6 @@
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #define _XOPEN_SOURCE 500 // ftruncate warning
 #include "master.h"
-#define READ 0
-#define WRITE 1
-#define STDOUT 1
-#define STDIN 0
-#define USED 1
-#define UNUSED 0
-
-#define SLAVES 7
-#define SLAVE_PATH "./slave"
 
 int currentTask = 1;
 int totalTasks;
@@ -113,7 +104,6 @@ void createSlaves(int slaveCount, int initialTasks, char *files[], slaveinfo *sl
 
 		slave[i].fdAnswersRead = answers[READ];
 		slave[i].fdTasksWrite = tasks[WRITE];
-		slave[i].status = USED;
 		slave[i].tasks = initialTasks;
 
 		if (close(tasks[READ]) < 0 || close(answers[WRITE]) < 0) {
@@ -139,11 +129,9 @@ void assignTasks(slaveinfo *slave, int slaveCount, int remainingTasks, FILE *res
 		int fd;
 		int maxFd = -1;
 		for (int i = 0; i < slaveCount; i++) {
-			if (slave[i].status) {
-				fd = slave[i].fdAnswersRead;
-				FD_SET(fd, &fdSet);
-				maxFd = (maxFd > fd) ? maxFd : fd;
-			}
+			fd = slave[i].fdAnswersRead;
+			FD_SET(fd, &fdSet);
+			maxFd = (maxFd > fd) ? maxFd : fd;
 		}
 
 		int ready = select(maxFd + 1, &fdSet, NULL, NULL, NULL);
