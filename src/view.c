@@ -10,7 +10,7 @@ int main(int argc, char const *argv[]) {
     struct stat shm_st;
     int fileCount= 0;
 
-    sem_t * semaphore = sem_open(SEM,1);
+    sem_t * semaphore = sem_open(SEM,O_CREAT);
    
     if(argc == 2){
         fileCount = atoi(argv[1]);
@@ -48,8 +48,7 @@ int main(int argc, char const *argv[]) {
 
        sem_wait(semaphore);
 
-
-        printf("holas");
+       printf("holas");
        printf("%s\n", ptr_read_results);
        ptr_read_results += SHM_SIZE;
 

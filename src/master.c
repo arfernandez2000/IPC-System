@@ -273,8 +273,8 @@ void newTask(slaveinfo* slave, char* tasks[]) {
         error("Error al escribir en el pipe");
     }
 
-    char readBuff[4096] ={0};
-    read(slave->fdTasksWrite, readBuff, 4096);
-    printf("%s\n", readBuff);
+    // char readBuff[4096] ={0};
+    // read(slave->fdTasksWrite, readBuff, 4096);
+    // printf("%s\n", readBuff);
     slave->tasks = 1;
 }
