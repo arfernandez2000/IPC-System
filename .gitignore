@@ -71,19 +71,11 @@ settings.json
 
 #PVS-Studio Stuff
 strace_out
+.config/
 
 #TEST-FILES
-testFiles/
-src/slave
-src/hole10.cnf
-src/hole9.cnf
-src/hole8.cnf
-src/hole7.cnf
-src/hole6.cnf
-src/log.txt
-src/logSlave.txt
-scr/results.txt
-src/.config/
+*.cnf
+results.txt
 
 #Bash_history 
 .bash_history
