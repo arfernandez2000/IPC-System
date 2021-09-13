@@ -12,24 +12,12 @@
 #include <sys/shm.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-// #include "binary_sems.h"        /* Declares our binary semaphore functions */
-// #include "tlpi_hdr.h"
 
 /* Hard-coded keys for IPC objects */
 
 #define SHM_RESULTS "shm_results"
-#define SHM_SEMAPHORE "shm_sempahore" /* Key for shared memory segment */
-#define SHM_SIZE 4096				  /* Key for semaphore set */
-
-#define OBJ_PERMS (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)
-/* Permissions for our IPC objects */
-
-/* Two semaphores are used to ensure exclusive, alternating access
-   to the shared memory segment */
-
-#define WRITE_SEM 0 /* Writer has access to shared memory */
-#define READ_SEM 1	/* Reader has access to shared memory */
-
+#define SHM_SEMAPHORE "shm_sempahore"
+#define SHM_SIZE 4096
 #ifndef BUF_SIZE	  /* Allow "cc -D" to override definition */
 #define BUF_SIZE 1024 /* Size of transfer buffer */
 #endif
