@@ -47,8 +47,6 @@ int main(int argc, char const *argv[]) {
     while (i < fileCount){
 
        sem_wait(semaphore);
-
-       printf("holas");
        printf("%s\n", ptr_read_results);
        ptr_read_results += SHM_SIZE;
 

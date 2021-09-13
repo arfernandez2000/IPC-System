@@ -12,15 +12,15 @@
 #include "errors.h"
 
 #define BUFFER_SIZE 4096
+#define SAT_SOLVER "minisat"
 
 void solver(char* pathName);
 void waitTasks();
 
-// ./slave pipename filepath
 int main(int argc, char * argv[]) {
 
     if( setvbuf(stdout, NULL, _IONBF, 0) ){
-        error("Setvbuf failed");
+        error("Setvbuf falló");
     } 
     for (int i = 0; i < argc; i++) {
         solver(argv[i]);
@@ -39,22 +39,22 @@ void solver(char* pathName) {
     char resultSolver[BUFFER_SIZE];
     char masterResult[BUFFER_SIZE*2];
     
-    if(sprintf(command,"minisat %s | %s",filePath,parser) < 0){
-        error("Command build failed : sprintf error");
+    if(sprintf(command,"%s %s | %s",SAT_SOLVER,filePath,parser) < 0){
+        error("Construcción del comando solver falló : error de sprintf");
     }
     FILE* fdFile = popen(command,"r");
     if(fdFile == NULL){
-        error("popen failed");
+        error("popen falló");
     }
     fread(resultSolver,sizeof(char),BUFFER_SIZE,fdFile);
     if(ferror(fdFile)){
-        error("fread failed");
+        error("fread falló");
     }
     if(pclose(fdFile) < 0){
-        error("Closing file descriptor failed");
+        error("No se pudo cerrar el File descriptor");
     };
     if(sprintf(masterResult,"PID: %d \nFilename: %s\n%s\n",getpid(),filePath,resultSolver) < 0){
-        error("Master response build failed");
+        error("Respuesta al master falló");
     }
     
     printf("%s", masterResult);
@@ -68,7 +68,7 @@ void waitTasks(){
     while ( ( count = read(fileno(stdin), task, BUFFER_SIZE) ) != 0){
 
         if(count == ERROR){
-            error("Read failed");
+            error("Falló el read");
         }
         task[count] = 0;
         solver(task);

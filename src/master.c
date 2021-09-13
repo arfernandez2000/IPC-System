@@ -12,7 +12,6 @@
 #define SLAVES 3
 #define SLAVE_PATH "./slave"
 
-// sem_t semaphore;
 int currentTask = 1;
 int totalTasks;
 char *ptr_write;
@@ -23,7 +22,7 @@ int main(int argc, char const *argv[]){
         error("Cantidad incorrecta de argumentos");
     }
     if( setvbuf(stdout, NULL, _IONBF, 0) ){
-        error("Setvbuf failed");
+        error("Setvbuf falló");
     }
     
     ptr_write = createShm(argc-1);   
@@ -55,7 +54,7 @@ int main(int argc, char const *argv[]){
     }
 
      if( sem_close(semaphore) < 0)
-         error("Semaphore close failed");
+         error("No se pudo cerrar el semáforo");
 
     closeSlaves(slave, slaveCount);  
     closeShm();
@@ -64,18 +63,12 @@ int main(int argc, char const *argv[]){
 
 void createSlaves(int slaveCount, int initialTasks, char* files[], slaveinfo* slave) {
 
-
-    // FILE* fdPrueba;
-    // fdPrueba = fopen("log.txt", "w+") ;
-
     int tasks[2];
     int answers[2];
 
     char* filesToSend[BUF_SIZE] = {0};
     int counter = 1;
-    // char readBuf[10000] = {0};    
-    //for por cada slave -> cortarlo si me quedo sin archivos antes de llenar los 7 slaves
-    
+
     for (int i = 0; i < slaveCount; i++) {       
         if(pipe(tasks) < 0) {
             error("Error al crear pipe task");
@@ -130,20 +123,6 @@ void createSlaves(int slaveCount, int initialTasks, char* files[], slaveinfo* sl
         }
         counter += initialTasks;
     }
-    
-    //TODO-funcion para el select
-
-    // sleep(2);
-    
-    // for (int i = 0; i < slaveCount; i++) {
-    //     if (read(slave[i].fdAnswersRead, readBuf, 10000) < 0) {
-    //         error("Error al leer el answers, READ");
-    //     }
-    //     fprintf(fdPrueba, "%s\n", readBuf);
-    //     close(slave[i].fdAnswersRead);
-    // }
-	
-    // fclose(fdPrueba);
     currentTask += slaveCount*initialTasks;
 }
 
@@ -213,15 +192,15 @@ char *  createShm(int tasks){
     fd  = shm_open(SHM_RESULTS, O_CREAT | O_RDWR, 00600);
   
     if (-1 == fd)
-        error("shm_open failed");
+        error("shm_open falló");
 
     if(-1 == ftruncate(fd, SHM_SIZE * tasks)){
-        error("ftruncate failed");
+        error("ftruncate falló");
     }
     ptr = mmap(NULL,SHM_SIZE * tasks, PROT_WRITE, MAP_SHARED, fd, 0);
 
     if(ptr == MAP_FAILED){
-        error("Map failed");
+        error("Mapeo  de Shared Memory falló");
     }
 
     return ptr;   
@@ -237,7 +216,7 @@ void writeShm(char * results){
 
     fd = shm_open(SHM_RESULTS, O_RDWR, 0);
     if (-1 == fd)
-       error("shm_open failed");
+       error("shm_open falló");
     
 
     size_t strLength = strlen(results)+1;
@@ -257,10 +236,7 @@ int writeResult(FILE* results, slaveinfo slave){
     fputs(readBuff, results);
     fflush(results);
 
-    // sem_wait(semaphore);
-
     writeShm(readBuff);
-    // sem_wait(semaphore);
 
     sem_post(semaphore);
     return charRead;
@@ -273,8 +249,5 @@ void newTask(slaveinfo* slave, char* tasks[]) {
         error("Error al escribir en el pipe");
     }
 
-    // char readBuff[4096] ={0};
-    // read(slave->fdTasksWrite, readBuff, 4096);
-    // printf("%s\n", readBuff);
     slave->tasks = 1;
 }
