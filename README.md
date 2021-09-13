@@ -3,10 +3,11 @@ Primer Trabajo Práctico Obligatorio para la materia Sistemas Operativos
 
 # Requerimentos
 
-Se necesita obligatoriamente la librería Minisat . 
+Se necesita obligatoriamente la librería Minisat . Para análisis estático de código se necesita PVS-STUDIO y cppcheck
 
 sudo apt-get install minisat.
-A su vez, se debe contar con archivos .cnf en la carpeta src.
+
+A su vez, se debe contar con archivos .cnf en la carpeta raíz del proyecto(TP1-SO).
 
 # Compilación
 
@@ -17,12 +18,12 @@ $> make all
 Los ejecutables que se crean son master, slave y view.
 
 # Correr el programa
-Ubicarse en la carpeta src.
-Opcion 1: Utilizando solo una terminal
+
+## Opcion 1: Utilizando solo una terminal
 
 $> ./master filename1.cnf  filename2.cnf .... | ./view
 
-Opcion 2: Utilizando dos terminales
+## Opcion 2: Utilizando dos terminales
 
 En la primer terminal ejecutar 
 
@@ -42,7 +43,9 @@ $> make check
 
 Para ejecutar PVS-Studio correr:
 
-$> make pvs-studio
+$> make pvs
+
+Los resultados de pvs se pueden apreciar en el archivo report.tasks. En el informe hay una justificación de la respuesta. 
 
 # Formating
 

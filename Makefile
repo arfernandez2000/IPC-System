@@ -11,7 +11,7 @@ $(MASTER): %: src/%.c
 	@$(CC) $(GCCFLAGS) $(EXT_FILES) -o $@ $< $(GCCLIBS)
 
 check:
-	cppcheck --quiet --enable=all --force --inconclusive src
+	cppcheck --quiet --enable=all --force --inconclusive --suppress=missingIncludeSystem src
 pvs:
 	pvs-studio-analyzer trace -- make
 	pvs-studio-analyzer analyze
