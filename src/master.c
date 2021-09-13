@@ -9,7 +9,7 @@
 #define USED 1
 #define UNUSED 0
 
-#define SLAVES 3
+#define SLAVES 7
 #define SLAVE_PATH "./slave"
 
 int currentTask = 1;
@@ -130,13 +130,6 @@ void closeSlaves(slaveinfo *slave, int slaveCount) {
 		close(slave[i].fdTasksWrite);
 	}
 }
-
-void closeWriteSlaves(slaveinfo *slave, int slaveCount) {
-	for (int i = 0; i < slaveCount; i++) {
-		close(slave[i].fdTasksWrite);
-	}
-}
-
 void assignTasks(slaveinfo *slave, int slaveCount, int remainingTasks, FILE *results, char *tasks[]) {
 	while (remainingTasks > 0) {
 		fd_set fdSet;
