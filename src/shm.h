@@ -17,11 +17,12 @@
 
 /* Hard-coded keys for IPC objects */
 
-#define SHM_NAME "shm_so"         /* Key for shared memory segment */
+#define SHM_RESULTS "shm_results"
+#define SHM_SEMAPHORE "shm_sempahore"         /* Key for shared memory segment */
 #define SHM_SIZE 4096         /* Key for semaphore set */
 
 #define OBJ_PERMS (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)
-                                /* Permissions for our IPC objects */
+/* Permissions for our IPC objects */
 
 /* Two semaphores are used to ensure exclusive, alternating access
    to the shared memory segment */

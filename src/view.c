@@ -5,8 +5,9 @@
 // ./view filecount
 int main(int argc, char const *argv[]) {
 
-    int fd;
-    char *ptr_read;
+    int fd,fdSem;
+    char *ptr_read_results;
+    sem_t* ptr_semaphore;
     struct stat shm_st;
     int fileCount= 0;
 
@@ -24,8 +25,13 @@ int main(int argc, char const *argv[]) {
         error("Cantidad incorrecta de argumentos");
     }
 
-    fd = shm_open (SHM_NAME,  O_RDONLY  , 00400); /* open s.m object*/
+    fd = shm_open (SHM_RESULTS,  O_RDONLY  , 00400); /* open s.m object*/
+    fdSem = shm_open(SHM_SEMAPHORE,O_RDONLY  , 00400);
     if(fd == -1)
+    {
+        error("Shared Memory open fallo");
+    }
+    if(fdSem == -1)
     {
         error("Shared Memory open fallo");
     }
@@ -34,23 +40,22 @@ int main(int argc, char const *argv[]) {
     {
         perror("fstat fallo");
     }
-  
-    ptr_read = mmap(NULL, shm_st.st_size, PROT_READ, MAP_SHARED, fd, 0);
-
-    if(ptr_read == MAP_FAILED)
+    
+    ptr_read_results = mmap(NULL, shm_st.st_size, PROT_READ, MAP_SHARED, fd, 0);
+    ptr_semaphore = mmap(NULL, sizeof(sem_t*), PROT_READ, MAP_SHARED, fdSem, 0);
+    printf("SEMAPHORE VIEW> %d", ptr_semaphore);
+    if(ptr_read_results == MAP_FAILED)
     {
         error("Fallo el mapeo de la shared memory");
     }
 
     int i=0;
     while (i < fileCount){
-       
-    // //    if(sem_wait(semaphore) < 0){
-    // //     error("Semaphore View Error");
-    // //    };
 
-       printf("%s \n", ptr_read);
-       ptr_read += SHM_SIZE;
+       sem_wait(ptr_semaphore);
+       printf("%s \n", ptr_read_results);
+       ptr_read_results += SHM_SIZE;
+       sem_post(ptr_semaphore);
        i++;
     }
 

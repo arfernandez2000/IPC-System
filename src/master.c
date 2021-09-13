@@ -12,7 +12,7 @@
 #define SLAVES 3
 #define SLAVE_PATH "./slave"
 
-sem_t* semaphore;
+sem_t semaphore;
 int currentTask = 1;
 int totalTasks;
 char *ptr_write;
@@ -27,8 +27,8 @@ int main(int argc, char const *argv[]){
 
     sleep(2);
     
-    //semaphore = sem_open(SEM,O_CREAT,SEM_FLAGS);
-
+    sem_init(&semaphore,1,1);
+    printf("SEMAPHORE> %d", &semaphore);
     int initialTasks =  SLAVES * 2 >= argc ? 1 : 2; 
 
     FILE * results;
@@ -49,8 +49,8 @@ int main(int argc, char const *argv[]){
         error("Error al cerrar results.txt");
     }
 
-    //if( sem_close(semaphore) < 0)
-    //    error("Semaphore close failed");
+    // if( sem_close(&semaphore) < 0)
+    //     error("Semaphore close failed");
 
     closeSlaves(slave, slaveCount);  
     //closeShm();
@@ -212,27 +212,40 @@ void assignTasks(slaveinfo* slave, int slaveCount, int remainingTasks, FILE* res
 
 char *  createShm(int tasks){
 
-    int fd;
+    int fd, fdSem;
     char * ptr;
+    sem_t* ptr_semaphore;
 
-    fd  = shm_open(SHM_NAME, O_CREAT | O_RDWR, 00600);
+    fd  = shm_open(SHM_RESULTS, O_CREAT | O_RDWR, 00600);
+    fdSem = shm_open(SHM_SEMAPHORE,O_CREAT | O_RDWR, 00600);
     if (-1 == fd)
         error("shm_open failed");
 
     if(-1 == ftruncate(fd, SHM_SIZE * tasks)){
         error("ftruncate failed");
-    };
-
+    }
+    if (-1 == fdSem){
+        error("shm_open failed");
+    }
+    if(-1 == ftruncate(fdSem,sizeof(sem_t*))){
+        error("ftruncate failed");
+    }
     ptr = mmap(NULL,SHM_SIZE * tasks, PROT_WRITE, MAP_SHARED, fd, 0);
+    ptr_semaphore = mmap(NULL,sizeof(sem_t*),PROT_WRITE, MAP_SHARED, fdSem, 0);
+
+    memcpy(ptr_semaphore,&semaphore,sizeof(sem_t));
 
     if(ptr == MAP_FAILED){
         error("Map failed");
     }
-
+    if(ptr== MAP_FAILED){
+        error("Map failed");
+    }
+    
     return ptr;   
 }  
 void closeShm(){
-    shm_unlink(SHM_NAME);
+    shm_unlink(SHM_RESULTS);
 }
 
 void writeShm(char * results){
@@ -240,7 +253,7 @@ void writeShm(char * results){
     int fd;
     
 
-    fd = shm_open(SHM_NAME, O_RDWR, 0);
+    fd = shm_open(SHM_RESULTS, O_RDWR, 0);
     if (-1 == fd)
        error("shm_open failed");
     
@@ -253,9 +266,6 @@ void writeShm(char * results){
 
     close(fd);
     return;
-    // if(sem_post(semaphore) < 0 ){
-    //     error("Semaphore Master Error");
-    // }
 }
 
 int writeResult(FILE* results, slaveinfo slave){
@@ -264,8 +274,10 @@ int writeResult(FILE* results, slaveinfo slave){
     charRead = read(slave.fdAnswersRead, readBuff, BUF_SIZE);
     fputs(readBuff, results);
     fflush(results);
-    //printf("charRead: %d", charRead);
+    // sem_wait(&semaphore);
     writeShm(readBuff);
+    //sem_post(&semaphore);
+
     printf("%s", readBuff);
 
     return charRead;
