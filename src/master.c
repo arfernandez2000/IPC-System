@@ -21,14 +21,15 @@ int main(int argc, char const *argv[]){
     if(argc < 2){
         error("Cantidad incorrecta de argumentos");
     }
-
-    //setvbuf(stdout,NULL,_IONBF,0);
-    ptr_write = createShm(argc-1);
-
-    sleep(2);
+    if( setvbuf(stdout, NULL, _IONBF, 0) ){
+        error("Setvbuf failed");
+    }
     
-    sem_init(&semaphore,1,1);
-    printf("SEMAPHORE> %d", &semaphore);
+    ptr_write = createShm(argc-1);    
+
+    sem_t * semaphore = sem_open(SEM,O_CREAT,SEM_FLAGS);
+
+    
     int initialTasks =  SLAVES * 2 >= argc ? 1 : 2; 
 
     FILE * results;
@@ -41,19 +42,22 @@ int main(int argc, char const *argv[]){
     slaveinfo slave[slaveCount];
     int remainingTasks = argc - 1;
     totalTasks = argc - 1;
+    printf("%d",argc-1);
 
+    sleep(2);
+    
     createSlaves(slaveCount, initialTasks, (char**) argv, slave);
-    assignTasks(slave, slaveCount, remainingTasks, results, (char**) argv);
+    assignTasks(slave, slaveCount, remainingTasks, results, (char**) argv,semaphore);
 
     if(fclose(results) < 0){
         error("Error al cerrar results.txt");
     }
 
-    // if( sem_close(&semaphore) < 0)
-    //     error("Semaphore close failed");
+     if( sem_close(semaphore) < 0)
+         error("Semaphore close failed");
 
     closeSlaves(slave, slaveCount);  
-    //closeShm();
+    closeShm();
     return 0;
 }
 
@@ -69,10 +73,6 @@ void createSlaves(int slaveCount, int initialTasks, char* files[], slaveinfo* sl
     char* filesToSend[BUF_SIZE] = {0};
     int counter = 1;
     // char readBuf[10000] = {0};    
-
-    printf("initial Tasks: %d\n", initialTasks);
-    printf("slaves count: %d\n", slaveCount);
-
     //for por cada slave -> cortarlo si me quedo sin archivos antes de llenar los 7 slaves
     
     for (int i = 0; i < slaveCount; i++) {       
@@ -83,9 +83,6 @@ void createSlaves(int slaveCount, int initialTasks, char* files[], slaveinfo* sl
         if(pipe(answers) < 0) {
             error("Error al crear pipe answer");
         }
-
-        printf("fdAnsRead: %d, fdTaskWrite: %d\n", answers[READ], tasks[WRITE]);
-
         int pid;
     
         if ((pid = fork()) == 0) {
@@ -147,8 +144,6 @@ void createSlaves(int slaveCount, int initialTasks, char* files[], slaveinfo* sl
 	
     // fclose(fdPrueba);
     currentTask += slaveCount*initialTasks;
-    printf("current task en create: %d\n", currentTask);
-    printf("chau create\n");
 }
 
 void closeSlaves(slaveinfo* slave, int slaveCount){
@@ -168,9 +163,8 @@ void closeWriteSlaves(slaveinfo* slave, int slaveCount){
     
 }
 
-void assignTasks(slaveinfo* slave, int slaveCount, int remainingTasks, FILE* results, char* tasks[]){
+void assignTasks(slaveinfo* slave, int slaveCount, int remainingTasks, FILE* results, char* tasks[],sem_t * semaphore){
     while (remainingTasks > 0) {
-        //printf("rt: %d\n", remainingTasks);
         fd_set fdSet;
         FD_ZERO(&fdSet);
         FD_SET(0, &fdSet);
@@ -192,7 +186,7 @@ void assignTasks(slaveinfo* slave, int slaveCount, int remainingTasks, FILE* res
 
         for(int i = 0; i < slaveCount; i++){
             if(FD_ISSET(slave[i].fdAnswersRead, &fdSet)) {
-                if (writeResult(results, slave[i]) > 0) {
+                if (writeResult(results, slave[i],semaphore) > 0) {
                     if(slave[i].tasks > 1){
                         remainingTasks--;
                     }
@@ -200,7 +194,6 @@ void assignTasks(slaveinfo* slave, int slaveCount, int remainingTasks, FILE* res
                     if(slave[i].tasks == 0 && remainingTasks != 0){
                         remainingTasks--;
                         if(currentTask <= totalTasks) {
-                            printf("voy a asignarle una nueva task a mi slave");
                             newTask(&slave[i], tasks);
                         }   
                     }
@@ -212,36 +205,24 @@ void assignTasks(slaveinfo* slave, int slaveCount, int remainingTasks, FILE* res
 
 char *  createShm(int tasks){
 
-    int fd, fdSem;
+    int fd;
     char * ptr;
-    sem_t* ptr_semaphore;
+ 
 
     fd  = shm_open(SHM_RESULTS, O_CREAT | O_RDWR, 00600);
-    fdSem = shm_open(SHM_SEMAPHORE,O_CREAT | O_RDWR, 00600);
+  
     if (-1 == fd)
         error("shm_open failed");
 
     if(-1 == ftruncate(fd, SHM_SIZE * tasks)){
         error("ftruncate failed");
     }
-    if (-1 == fdSem){
-        error("shm_open failed");
-    }
-    if(-1 == ftruncate(fdSem,sizeof(sem_t*))){
-        error("ftruncate failed");
-    }
     ptr = mmap(NULL,SHM_SIZE * tasks, PROT_WRITE, MAP_SHARED, fd, 0);
-    ptr_semaphore = mmap(NULL,sizeof(sem_t*),PROT_WRITE, MAP_SHARED, fdSem, 0);
-
-    memcpy(ptr_semaphore,&semaphore,sizeof(sem_t));
 
     if(ptr == MAP_FAILED){
         error("Map failed");
     }
-    if(ptr== MAP_FAILED){
-        error("Map failed");
-    }
-    
+
     return ptr;   
 }  
 void closeShm(){
@@ -268,18 +249,15 @@ void writeShm(char * results){
     return;
 }
 
-int writeResult(FILE* results, slaveinfo slave){
+int writeResult(FILE* results, slaveinfo slave, sem_t* semaphore){
     char readBuff[BUF_SIZE] ={0};
     int charRead;
     charRead = read(slave.fdAnswersRead, readBuff, BUF_SIZE);
     fputs(readBuff, results);
     fflush(results);
-    // sem_wait(&semaphore);
+    sem_wait(semaphore);
     writeShm(readBuff);
-    //sem_post(&semaphore);
-
-    printf("%s", readBuff);
-
+    sem_post(semaphore);
     return charRead;
 }
 
