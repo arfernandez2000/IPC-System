@@ -1,6 +1,10 @@
 # TP1-SO
 Primer Trabajo Práctico Obligatorio para la materia Sistemas Operativos
 
+Marcos Dedeu, Legajo 60469
+Hernán Finucci , Legajo 60178
+Ariadna Fernández Truglia, Legajo 60199
+
 # Requerimentos
 
 Se necesita obligatoriamente la librería Minisat . Para análisis estático de código se necesita *PVS-STUDIO* y *cppcheck* y para formatear la librería *Clang-Format*.
